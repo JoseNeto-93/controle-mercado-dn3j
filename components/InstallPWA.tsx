@@ -16,15 +16,23 @@ export const InstallPWA: React.FC = () => {
     
     if (isIosDevice && !isStandalone) {
       setIsIOS(true);
-      // Optional: Show iOS hint automatically or wait for user action. 
-      // For now, we'll keep it hidden unless we want to force a banner.
+      // On iOS, we show the hint if the user isn't in standalone mode
       setShowIOSHint(true); 
     }
 
+    // 1. Check if the event was already captured in index.html
+    if ((window as any).deferredPrompt) {
+      setDeferredPrompt((window as any).deferredPrompt);
+      setIsVisible(true);
+    }
+
+    // 2. Listen for future events
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setIsVisible(true);
+      // Store globally just in case
+      (window as any).deferredPrompt = e;
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -43,6 +51,7 @@ export const InstallPWA: React.FC = () => {
       setIsVisible(false);
     }
     setDeferredPrompt(null);
+    (window as any).deferredPrompt = null;
   };
 
   if (!isVisible && !showIOSHint) return null;
@@ -62,7 +71,7 @@ export const InstallPWA: React.FC = () => {
         </div>
       )}
 
-      {/* iOS Hint Banner (Optional, appears at bottom) */}
+      {/* iOS Hint Banner */}
       {showIOSHint && isIOS && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800 border-t border-slate-700 p-4 shadow-2xl animate-fade-in-up">
           <div className="max-w-3xl mx-auto flex items-start justify-between">
